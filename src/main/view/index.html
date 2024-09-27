@@ -15,13 +15,19 @@
         h1 {
             text-align: center;
             color: #333;
+            margin-bottom: 20px;
+        }
+        h1 .red-text {
+            color: red;
         }
         .container {
             display: flex;
+            justify-content: center;
             transition: all 0.5s ease;
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
+            position: relative;
         }
         table {
             width: 50%;
@@ -30,6 +36,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             margin-right: 20px;
             transition: all 0.5s ease;
+            border-radius: 8px;
         }
         th, td {
             padding: 12px 15px;
@@ -39,6 +46,7 @@
         th {
             background-color: #4CAF50;
             color: white;
+            border-radius: 8px 8px 0 0;
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
@@ -62,6 +70,10 @@
             box-sizing: border-box;
             transition: all 0.5s ease;
             overflow-y: auto;
+            display: none; /* 뉴스 창을 처음에 숨깁니다 */
+        }
+        #news-list {
+            margin-top: 20px;
         }
         .news-item {
             margin-bottom: 10px;
@@ -78,22 +90,23 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-bottom: 20px;
-            display: block;
-            text-align: center;
+            display: none; /* Close 버튼을 처음에 숨깁니다 */
+        }
+        .close-btn:hover {
+            background-color: #c9302c;
         }
     </style>
 </head>
 <body>
 
-<h1>┌П┐주식 순위 제공 서비스┌П┐</h1>
+<h1>┌П┐실시간 <span class="red-text">주가</span> 정보 제공 서비스┌П┐</h1>
 <div class="container" id="container">
   <table id="stock-table">
     <thead>
     <tr>
       <th>순위</th>
-      <th>주식 종목</th>
-      <th>주가(₩)</th>
+      <th>주식 이름</th>
+      <th>현재 주가 (₩)</th>
     </tr>
     </thead>
     <tbody>
@@ -145,6 +158,7 @@
                 // 뉴스 컨테이너와 뉴스 리스트 선택
                 const newsContainer = document.getElementById('news-container');
                 const newsList = document.getElementById('news-list');
+                const closeButton = document.querySelector('.close-btn');
                 newsList.innerHTML = ''; // 기존 내용을 지우고 새로 작성
 
                 // API에서 받은 뉴스 데이터를 뉴스 컨테이너에 삽입
@@ -157,7 +171,10 @@
                     newsList.appendChild(newsItem);
                 });
 
-                // 뉴스 창을 보여줌
+                // 뉴스 창과 닫기 버튼을 보여줌
+                newsContainer.style.display = 'block';
+                closeButton.style.display = 'block';
+
                 openNews();
             } catch (error) {
                 console.error('Error fetching news data:', error);
@@ -169,8 +186,8 @@
             const container = document.getElementById('container');
             const newsContainer = document.getElementById('news-container');
 
-            // 주식 테이블을 왼쪽으로 밀고 뉴스 창을 보여줌
-            container.style.transform = 'translateX(-50%)';
+            // 주식 테이블을 가운데에서 왼쪽으로 밀고 뉴스 창을 열음
+            container.style.justifyContent = 'flex-start';
             newsContainer.style.right = '0';
         }
 
@@ -178,10 +195,17 @@
         function closeNews() {
             const container = document.getElementById('container');
             const newsContainer = document.getElementById('news-container');
+            const closeButton = document.querySelector('.close-btn');
 
-            // 주식 테이블을 원래 위치로 돌리고 뉴스 창을 숨김
-            container.style.transform = 'translateX(0)';
+            // 주식 테이블을 원래 가운데로 되돌리고 뉴스 창을 숨김
+            container.style.justifyContent = 'center';
             newsContainer.style.right = '-50%';
+
+            // 애니메이션 후 뉴스 창과 닫기 버튼을 숨김
+            setTimeout(() => {
+                newsContainer.style.display = 'none';
+                closeButton.style.display = 'none';
+            }, 500); // transition 시간에 맞춰 0.5초 후에 숨김
         }
 
         // 페이지 로드 시 데이터 가져오기
