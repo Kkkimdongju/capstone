@@ -22,8 +22,7 @@
         }
         .container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            justify-content: center;
             transition: all 0.5s ease;
             width: 100%;
             max-width: 1200px;
@@ -31,11 +30,11 @@
             position: relative;
         }
         table {
-            width: 100%;
+            width: 50%;
             border-collapse: collapse;
             background-color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            margin-right: 20px;
             transition: all 0.5s ease;
             border-radius: 8px;
         }
@@ -61,10 +60,8 @@
             color: #333;
         }
         .chart-small {
-            width: 300px; /* 너비 300px로 조정 */
-            height: 150px; /* 높이 150px로 조정 */
-            display: block;
-            margin: 0 auto; /* 가운데 정렬 */
+            width: 300px;
+            height: 150px;
         }
         .chart-buttons {
             display: flex;
@@ -80,19 +77,50 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        .chart-buttons button.selected {
-            background-color: #cccccc; /* 선택된 버튼 색상 회색 */
-            color: #333; /* 선택된 버튼 텍스트 색상 */
-        }
-        .chart-buttons button:hover:not(.selected) {
+        .chart-buttons button:hover {
             background-color: #45a049;
+        }
+        #news-container {
+            position: absolute;
+            right: -50%;
+            width: 50%;
+            height: 100%;
+            background-color: white;
+            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            transition: all 0.5s ease;
+            overflow-y: auto;
+            display: none; /* 뉴스 창을 처음에 숨깁니다 */
+        }
+        #news-list {
+            margin-top: 20px;
+        }
+        .news-item {
+            margin-bottom: 10px;
+        }
+        .news-item a {
+            text-decoration: none;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        .close-btn {
+            background-color: #d9534f;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Close 버튼을 처음에 숨깁니다 */
+        }
+        .close-btn:hover {
+            background-color: #c9302c;
         }
   </style>
 </head>
 <body>
 
 <h1>┌П┐실시간 <span class="red-text">주가</span> 정보 제공 서비스┌П┐</h1>
-
 <div class="container" id="container">
   <table id="stock-table">
     <thead>
@@ -107,6 +135,13 @@
     <!-- 데이터가 여기에 추가될 예정 -->
     </tbody>
   </table>
+
+  <div id="news-container">
+    <button class="close-btn" onclick="closeNews()">Close News</button>
+    <div id="news-list">
+      <!-- 뉴스 데이터가 여기에 표시될 예정 -->
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -116,14 +151,15 @@
     // API에서 데이터를 가져와 테이블과 차트에 렌더링하는 함수
     async function fetchStockData() {
         try {
-            const response = await fetch('/volume-rank');
+            const response = await fetch('/volume-rank'); // 상대 경로로 API 호출
             const data = await response.json(); // JSON 데이터로 변환
 
+            // 테이블의 tbody 요소 선택
             const tableBody = document.querySelector('#stock-table tbody');
-            tableBody.innerHTML = ''; // 테이블 초기화
+            tableBody.innerHTML = ''; // 기존 내용을 지우고 새로 작성
 
-            // 첫 30개의 종목 데이터를 테이블에 삽입
-            data.slice(0, 30).forEach(async (stock, index) => {
+            // API에서 받은 데이터를 테이블에 삽입
+            data.forEach(async (stock, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${stock.dataRank}</td>
@@ -132,12 +168,13 @@
                     <td>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
                         <div class="chart-buttons">
-                            <button onclick="updateChart('${stock.isuCd}', 'D', ${index}, '${stock.htsKorIsnm}', this)">일</button>
-                            <button onclick="updateChart('${stock.isuCd}', 'M', ${index}, '${stock.htsKorIsnm}', this)">월</button>
-                            <button onclick="updateChart('${stock.isuCd}', 'Y', ${index}, '${stock.htsKorIsnm}', this)">연</button>
+                            <button onclick="updateChart('${stock.isuCd}', 'D', ${index}, '${stock.htsKorIsnm}')">일</button>
+                            <button onclick="updateChart('${stock.isuCd}', 'M', ${index}, '${stock.htsKorIsnm}')">월</button>
+                            <button onclick="updateChart('${stock.isuCd}', 'Y', ${index}, '${stock.htsKorIsnm}')">연</button>
                         </div>
                     </td>
                 `;
+                row.addEventListener('click', () => fetchRelatedNews(stock.htsKorIsnm)); // 각 행 클릭 시 뉴스 호출
                 tableBody.appendChild(row);
 
                 // 각 종목의 기본 차트를 일별 차트로 그리기
@@ -151,11 +188,12 @@
     // 차트 데이터를 API에서 가져와 렌더링하는 함수
     async function fetchChartData(stockName, stockCode, periodType, chartIndex) {
         try {
-            const response = await fetch(`/stock-price?stockCode=${encodeURIComponent(stockCode)}&periodType=${periodType}`);
+            // stockCode와 periodType을 이용해 차트 데이터를 가져옴
+            const response = await fetch(`/stock-price?stockCode=${stockCode}&periodType=${periodType}`);
             const data = await response.json(); // API로부터 데이터 받아오기
 
             const labels = data.map(item => item.date); // 날짜 레이블
-            const prices = data.map(item => item.close); // 종가 데이터
+            const prices = data.map(item => item.closePrice); // 종가 데이터
 
             renderSmallChart(labels, prices, chartIndex, stockName);
         } catch (error) {
@@ -178,29 +216,28 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: stockName,
+                    label: `${stockName} 최근 차트`,
                     data: data,
-                    borderColor: 'black', // 차트 색상 변경 (검정색)
-                    backgroundColor: 'rgba(0, 0, 0, 0.2)', // 아래 색상 검정색 계열로 변경
-                    borderWidth: 2,
-                    fill: true // 선 아래 색상 적용
+                    borderColor: 'rgba(0, 0, 0, 1)', // 검정색 선
+                    fill: false,
+                    tension: 0.1
                 }]
             },
             options: {
-                responsive: false,  // 반응형 비활성화
-                maintainAspectRatio: false, // 비율 유지 비활성화
+                responsive: true,
                 scales: {
                     x: {
+                        display: true,
                         ticks: {
-                            fontSize: 5, // x축 글꼴 크기 변경
-                            autoSkip: true, // 자동으로 레이블 생략
-                            maxTicksLimit: 3 // 최대 표시할 레이블 수
+                            autoSkip: true,
+                            maxTicksLimit: 3,
+                            font: {
+                                size: 10 // 날짜 크기 조정
+                            }
                         }
                     },
                     y: {
-                        ticks: {
-                            fontSize: 8 // y축 글꼴 크기
-                        }
+                        display: false // Y축 숨기기
                     }
                 },
                 plugins: {
@@ -213,15 +250,67 @@
     }
 
     // 버튼 클릭 시 차트 업데이트 함수
-    async function updateChart(stockCode, periodType, chartIndex, stockName, button) {
+    async function updateChart(stockCode, periodType, chartIndex, stockName) {
         await fetchChartData(stockName, stockCode, periodType, chartIndex);
+    }
 
-        // 버튼 상태 초기화
-        const buttons = button.parentElement.children;
-        for (const btn of buttons) {
-            btn.classList.remove('selected');
+    // 특정 주식의 관련 뉴스를 가져오는 함수
+    async function fetchRelatedNews(stockName) {
+        try {
+            const response = await fetch(`/search?query=${encodeURIComponent(stockName)}`);
+            const data = await response.json();
+
+            // 뉴스 컨테이너와 뉴스 리스트 선택
+            const newsContainer = document.getElementById('news-container');
+            const newsList = document.getElementById('news-list');
+            const closeButton = document.querySelector('.close-btn');
+            newsList.innerHTML = ''; // 기존 내용을 지우고 새로 작성
+
+            // API에서 받은 뉴스 데이터를 뉴스 컨테이너에 삽입
+            data.items.forEach(item => {
+                const newsItem = document.createElement('div');
+                newsItem.className = 'news-item';
+                newsItem.innerHTML = `
+                    <a href="${item.link}" target="_blank">${item.title}</a>
+                `;
+                newsList.appendChild(newsItem);
+            });
+
+            // 뉴스 창과 닫기 버튼을 보여줌
+            newsContainer.style.display = 'block';
+            closeButton.style.display = 'block';
+
+            openNews();
+        } catch (error) {
+            console.error('Error fetching news data:', error);
         }
-        button.classList.add('selected'); // 클릭한 버튼 선택 상태로 변경
+    }
+
+    // 뉴스 창을 여는 함수
+    function openNews() {
+        const container = document.getElementById('container');
+        const newsContainer = document.getElementById('news-container');
+
+        // 주식 테이블을 가운데에서 왼쪽으로 밀고 뉴스 창을 열음
+        container.style.justifyContent = 'flex-start';
+        newsContainer.style.right = '0';
+    }
+
+    // 뉴스 창을 닫는 함수
+    function closeNews() {
+        const container = document.getElementById('container');
+        const newsContainer = document.getElementById('news-container');
+        const closeButton = document.querySelector('.close-btn');
+
+        // 주식 테이블을 원래 가운데로 되돌리고 뉴스 창을 숨김
+        container.style.justifyContent = 'center';
+        newsContainer.style.right = '-50%';
+
+        // 애니메이션 후 뉴스 창과 닫기 버튼을 숨김
+        setTimeout(() => {
+            newsContainer.style.display = 'none';
+            closeButton.style.display = 'none';
+        }, 500); // transition 시간에 맞춰 0.5초 후에 숨김
     }
 
     // 페이지 로드 시 데이터 가져오기
