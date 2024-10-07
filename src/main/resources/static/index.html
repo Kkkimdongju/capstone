@@ -119,7 +119,7 @@
             background-color: #c9302c;
         }
         .active {
-            background-color: #868E96 !important
+            background-color: #868E96 !important;
             color: #DDDDDD !important;
         }
   </style>
@@ -250,6 +250,7 @@
                                 }
                                 return '';
                             },
+                            autoSkip: false,
                             font: {
                                 size: 10 // 날짜 크기 조정
                             },
@@ -262,7 +263,10 @@
                         ticks: {
                             maxTicksLimit: 3,
                             callback: function(value) {
-                                return value;
+                                if (value === minPrice || value === maxPrice || value === midPrice) {
+                                  return value;
+                                }
+                                return '';
                             },
                             font: {
                                 size: 10 // 가격 크기 조정
