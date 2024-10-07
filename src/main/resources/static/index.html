@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Information</title>
+  <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        h1 .red-text {
+            color: red;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            transition: all 0.5s ease;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-right: 20px;
+            transition: all 0.5s ease;
+            border-radius: 8px;
+        }
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+        td.stock-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .chart-small {
+            width: 300px;
+            height: 150px;
+        }
+        .chart-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 5px;
+        }
+        .chart-buttons button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .chart-buttons button:hover {
+            background-color: #45a049;
+        }
+        #news-container {
+            position: absolute;
+            right: -50%;
+            width: 50%;
+            height: 100%;
+            background-color: white;
+            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            transition: all 0.5s ease;
+            overflow-y: auto;
+            display: none; /* 뉴스 창을 처음에 숨깁니다 */
+        }
+        #news-list {
+            margin-top: 20px;
+        }
+        .news-item {
+            margin-bottom: 10px;
+        }
+        .news-item a {
+            text-decoration: none;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        .close-btn {
+            background-color: #d9534f;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Close 버튼을 처음에 숨깁니다 */
+        }
+        .close-btn:hover {
+            background-color: #c9302c;
+        }
+  </style>
+</head>
+<body>
+
+<h1>┌П┐실시간 <span class="red-text">주가</span> 정보 제공 서비스┌П┐</h1>
+<div class="container" id="container">
+  <table id="stock-table">
+    <thead>
+    <tr>
+      <th>순위</th>
+      <th>주식 이름</th>
+      <th>현재 주가 (₩)</th>
+      <th>최근 차트</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- 데이터가 여기에 추가될 예정 -->
+    </tbody>
+  </table>
+
+  <div id="news-container">
+    <button class="close-btn" onclick="closeNews()">Close News</button>
+    <div id="news-list">
+      <!-- 뉴스 데이터가 여기에 표시될 예정 -->
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let chartInstances = [];
+
+    // API에서 데이터를 가져와 테이블과 차트에 렌더링하는 함수
+    async function fetchStockData() {
+        try {
+            const response = await fetch('/volume-rank'); // 상대 경로로 API 호출
+            const data = await response.json(); // JSON 데이터로 변환
+
+            // 테이블의 tbody 요소 선택
+            const tableBody = document.querySelector('#stock-table tbody');
+            tableBody.innerHTML = ''; // 기존 내용을 지우고 새로 작성
+
+            // API에서 받은 데이터를 테이블에 삽입
+            data.forEach(async (stock, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${stock.dataRank}</td>
+                    <td class="stock-name">${stock.htsKorIsnm}</td>
+                    <td>${stock.stckPrpr}</td>
+                    <td>
+                        <canvas id="chart-small-${index}" class="chart-small"></canvas>
+                        <div class="chart-buttons">
+                            <button onclick="updateChart('${stock.isuCd}', 'D', ${index}, '${stock.htsKorIsnm}')">일</button>
+                            <button onclick="updateChart('${stock.isuCd}', 'M', ${index}, '${stock.htsKorIsnm}')">월</button>
+                            <button onclick="updateChart('${stock.isuCd}', 'Y', ${index}, '${stock.htsKorIsnm}')">연</button>
+                        </div>
+                    </td>
+                `;
+                row.addEventListener('click', () => fetchRelatedNews(stock.htsKorIsnm)); // 각 행 클릭 시 뉴스 호출
+                tableBody.appendChild(row);
+
+                // 각 종목의 기본 차트를 일별 차트로 그리기
+                await fetchChartData(stock.htsKorIsnm, stock.isuCd, 'D', index);
+            });
+        } catch (error) {
+            console.error('Error fetching stock data:', error);
+        }
+    }
+
+    // 차트 데이터를 API에서 가져와 렌더링하는 함수
+    async function fetchChartData(stockName, stockCode, periodType, chartIndex) {
+        try {
+            // stockCode와 periodType을 이용해 차트 데이터를 가져옴
+            const response = await fetch(`/stock-price?stockCode=${stockCode}&periodType=${periodType}`);
+            const data = await response.json(); // API로부터 데이터 받아오기
+
+            const labels = data.map(item => item.date); // 날짜 레이블
+            const prices = data.map(item => item.closePrice); // 종가 데이터
+
+            renderSmallChart(labels, prices, chartIndex, stockName);
+        } catch (error) {
+            console.error('Error fetching chart data:', error);
+        }
+    }
+
+    // 작은 차트 렌더링 함수
+    function renderSmallChart(labels, data, chartIndex, stockName) {
+        const ctx = document.getElementById(`chart-small-${chartIndex}`).getContext('2d');
+
+        // 기존 차트가 있으면 삭제
+        if (chartInstances[chartIndex]) {
+            chartInstances[chartIndex].destroy();
+        }
+
+        // 새로운 작은 차트 생성
+        chartInstances[chartIndex] = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `${stockName} 최근 차트`,
+                    data: data,
+                    borderColor: 'rgba(0, 0, 0, 1)', // 검정색 선
+                    fill: false,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        display: true,
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 3,
+                            font: {
+                                size: 10 // 날짜 크기 조정
+                            }
+                        }
+                    },
+                    y: {
+                        display: false // Y축 숨기기
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false // 범례 숨기기
+                    }
+                }
+            }
+        });
+    }
+
+    // 버튼 클릭 시 차트 업데이트 함수
+    async function updateChart(stockCode, periodType, chartIndex, stockName) {
+        await fetchChartData(stockName, stockCode, periodType, chartIndex);
+    }
+
+    // 특정 주식의 관련 뉴스를 가져오는 함수
+    async function fetchRelatedNews(stockName) {
+        try {
+            const response = await fetch(`/search?query=${encodeURIComponent(stockName)}`);
+            const data = await response.json();
+
+            // 뉴스 컨테이너와 뉴스 리스트 선택
+            const newsContainer = document.getElementById('news-container');
+            const newsList = document.getElementById('news-list');
+            const closeButton = document.querySelector('.close-btn');
+            newsList.innerHTML = ''; // 기존 내용을 지우고 새로 작성
+
+            // API에서 받은 뉴스 데이터를 뉴스 컨테이너에 삽입
+            data.items.forEach(item => {
+                const newsItem = document.createElement('div');
+                newsItem.className = 'news-item';
+                newsItem.innerHTML = `
+                    <a href="${item.link}" target="_blank">${item.title}</a>
+                `;
+                newsList.appendChild(newsItem);
+            });
+
+            // 뉴스 창과 닫기 버튼을 보여줌
+            newsContainer.style.display = 'block';
+            closeButton.style.display = 'block';
+
+            openNews();
+        } catch (error) {
+            console.error('Error fetching news data:', error);
+        }
+    }
+
+    // 뉴스 창을 여는 함수
+    function openNews() {
+        const container = document.getElementById('container');
+        const newsContainer = document.getElementById('news-container');
+
+        // 주식 테이블을 가운데에서 왼쪽으로 밀고 뉴스 창을 열음
+        container.style.justifyContent = 'flex-start';
+        newsContainer.style.right = '0';
+    }
+
+    // 뉴스 창을 닫는 함수
+    function closeNews() {
+        const container = document.getElementById('container');
+        const newsContainer = document.getElementById('news-container');
+        const closeButton = document.querySelector('.close-btn');
+
+        // 주식 테이블을 원래 가운데로 되돌리고 뉴스 창을 숨김
+        container.style.justifyContent = 'center';
+        newsContainer.style.right = '-50%';
+
+        // 애니메이션 후 뉴스 창과 닫기 버튼을 숨김
+        setTimeout(() => {
+            newsContainer.style.display = 'none';
+            closeButton.style.display = 'none';
+        }, 500); // transition 시간에 맞춰 0.5초 후에 숨김
+    }
+
+    // 페이지 로드 시 데이터 가져오기
+    window.onload = fetchStockData;
+</script>
+
+</body>
+</html>
