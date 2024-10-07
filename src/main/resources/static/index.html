@@ -87,18 +87,19 @@
             width: 50%;
             height: 100%;
             background-color: white;
-            box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+            box-shadow: -8px 0 10px rgba(0, 0, 0, 1);
             padding: 20px;
             box-sizing: border-box;
             transition: all 0.5s ease;
             overflow-y: auto;
+            text-align: -webkit-center;
             display: none; /* 뉴스 창을 처음에 숨깁니다 */
         }
         #news-list {
             margin-top: 20px;
         }
         .news-item {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
         .news-item a {
             text-decoration: none;
@@ -118,7 +119,7 @@
             background-color: #c9302c;
         }
         .active {
-            background-color: #ff0000; /* 활성화된 버튼의 색상 (예: 빨간색) */
+            background-color: #868E96;
         }
   </style>
 </head>
@@ -178,7 +179,7 @@
                 `;
                 row.addEventListener('click', (event) => {
                     if (event.target.tagName !== 'CANVAS' && !event.target.closest('.chart-buttons')) {
-                        fetchRelatedNews(stock.htsKorIsnm); // 차트 클릭 시에는 뉴스가 뜨지 않도록 수정
+                        fetchRelatedNews(stock.htsKorIsnm); // 차트 클릭 시 뉴스가 뜨지 않도록 수정
                     }
                 });
 
@@ -197,8 +198,8 @@
             const response = await fetch(`/stock-price?stockCode=${stockCode}&periodType=${periodType}`);
             const data = await response.json(); // API로부터 데이터 받아오기
 
-            const labels = data.map(item => item.date); // 날짜 레이블
-            const prices = data.map(item => item.closePrice); // 종가 데이터
+            const labels = data.map(item => item.date).reverse(); // 날짜 레이블을 최신 순으로 정렬
+            const prices = data.map(item => item.closePrice).reverse(); // 가격 데이터도 최신 순으로 정렬
 
             renderSmallChart(labels, prices, chartIndex, stockName);
         } catch (error) {
@@ -219,6 +220,10 @@
         const maxPrice = Math.max(...data);
         const midPrice = ((maxPrice + minPrice) / 2).toFixed(2); // 중간값 계산
 
+        const firstDate = labels[0];
+        const lastDate = labels[labels.length - 1];
+        const midDate = labels[Math.floor(labels.length / 2)];
+
         // 새로운 작은 차트 생성
         chartInstances[chartIndex] = new Chart(ctx, {
             type: 'line',
@@ -238,8 +243,12 @@
                     x: {
                         display: true,
                         ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 3,
+                            callback: function(value, index) {
+                                if (labels[index] === firstDate || labels[index] === lastDate || labels[index] === midDate) {
+                                    return labels[index]; // 가장 최근, 가장 오래된, 중간 날짜만 표시
+                                }
+                                return '';
+                            },
                             font: {
                                 size: 10 // 날짜 크기 조정
                             }
