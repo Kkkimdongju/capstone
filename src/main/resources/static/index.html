@@ -168,9 +168,9 @@
                     <td>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
                         <div class="chart-buttons">
-                            <button onclick="updateChart('${stock.isuCd}', 'D', ${index}, '${stock.htsKorIsnm}')">일</button>
-                            <button onclick="updateChart('${stock.isuCd}', 'M', ${index}, '${stock.htsKorIsnm}')">월</button>
-                            <button onclick="updateChart('${stock.isuCd}', 'Y', ${index}, '${stock.htsKorIsnm}')">연</button>
+                            <button onclick="updateChart('${stock.mkscShrnIscd}', 'D', ${index}, '${stock.htsKorIsnm}')">일</button>
+                            <button onclick="updateChart('${stock.mkscShrnIscd}', 'M', ${index}, '${stock.htsKorIsnm}')">월</button>
+                            <button onclick="updateChart('${stock.mkscShrnIscd}', 'Y', ${index}, '${stock.htsKorIsnm}')">연</button>
                         </div>
                     </td>
                 `;
@@ -178,7 +178,7 @@
                 tableBody.appendChild(row);
 
                 // 각 종목의 기본 차트를 일별 차트로 그리기
-                await fetchChartData(stock.htsKorIsnm, stock.isuCd, 'D', index);
+                await fetchChartData(stock.htsKorIsnm, stock.mkscShrnIscd, 'D', index);
             });
         } catch (error) {
             console.error('Error fetching stock data:', error);
