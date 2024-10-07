@@ -83,8 +83,8 @@
         }
         #news-container {
             position: absolute;
-            right: -50%;
-            width: 50%;
+            right: -70%;
+            width: 70%;
             height: 100%;
             background-color: white;
             box-shadow: -8px 0 10px rgba(0, 0, 0, 1);
@@ -217,6 +217,14 @@
             chartInstances[chartIndex].destroy();
         }
 
+        const minPrice = Math.min(...data);
+        const maxPrice = Math.max(...data);
+        const midPrice = ((maxPrice + minPrice) / 2); // 중간값 계산
+
+        const firstDate = labels[0];
+        const lastDate = labels[labels.length - 1];
+        const midDate = labels[Math.floor(labels.length / 2)];
+
         // 새로운 작은 차트 생성
         chartInstances[chartIndex] = new Chart(ctx, {
             type: 'line',
@@ -236,7 +244,12 @@
                     x: {
                         display: true,
                         ticks: {
-                            maxTicksLimit: 3,
+                            callback: function(value, index, values) {
+                                if (index === 0 || index === values.length - 1 || index === Math.floor(values.length / 2)) {
+                                    return labels[value]; // 가장 최근, 가장 오래된, 중간 날짜만 표시
+                                }
+                                return '';
+                            },
                             font: {
                                 size: 10 // 날짜 크기 조정
                             },
@@ -248,9 +261,14 @@
                         display: true, // Y축 보이기
                         ticks: {
                             maxTicksLimit: 3,
+                            callback: function(value) {
+                                return value;
+                            },
                             font: {
                                 size: 10 // 가격 크기 조정
                             },
+                            min: Math.min(...yTicks),
+                            max: Math.max(...yTicks),
                             maxRotation: 0,
                             minRotation: 0
                         }
@@ -321,7 +339,7 @@
         const closeButton = document.querySelector('.close-btn');
 
         container.style.justifyContent = 'center';
-        newsContainer.style.right = '-50%';
+        newsContainer.style.right = '-70%';
 
         setTimeout(() => {
             newsContainer.style.display = 'none';
