@@ -120,7 +120,7 @@
         }
         .active {
             background-color: #868E96 !important;
-            color: #DDDDDD !important;
+            color: #333333 !important;
         }
   </style>
 </head>
@@ -219,7 +219,7 @@
 
         const minPrice = Math.min(...data);
         const maxPrice = Math.max(...data);
-        const midPrice = ((maxPrice + minPrice) / 2); // 중간값 계산
+        const midPrice = Math.floor((maxPrice + minPrice) / 2); // 중간값 계산
 
         const firstDate = labels[0];
         const lastDate = labels[labels.length - 1];
@@ -261,10 +261,9 @@
                     y: {
                         display: true, // Y축 보이기
                         ticks: {
-                            maxTicksLimit: 3,
                             callback: function(value) {
                                 if (value === minPrice || value === maxPrice || value === midPrice) {
-                                  return value;
+                                  return Math.floor(value);
                                 }
                                 return '';
                             },
