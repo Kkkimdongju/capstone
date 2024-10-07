@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,10 +61,6 @@ public class PriceService {
                     StockPriceDTO stockPrice = new StockPriceDTO();
                     stockPrice.setDate(node.get("stck_bsop_date").asText());  // 거래일
                     stockPrice.setClosePrice(node.get("stck_clpr").asText());  // 종가
-                    stockPrice.setOpenPrice(node.get("stck_oprc").asText());   // 시가
-                    stockPrice.setHighPrice(node.get("stck_hgpr").asText());   // 고가
-                    stockPrice.setLowPrice(node.get("stck_lwpr").asText());    // 저가
-                    stockPrice.setVolume(node.get("acml_vol").asText());       // 거래량
                     priceDataList.add(stockPrice);
                 }
             }
@@ -76,13 +74,25 @@ public class PriceService {
     // 기간별 시세 데이터를 가져오는 메소드
     public Mono<List<StockPriceDTO>> getStockPrice(String stockCode, String periodType) {
         HttpHeaders headers = createStockPriceHttpHeaders();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        LocalDate today = LocalDate.now();
+        LocalDate since;
+        if (periodType.equals("M")) {
+            since = today.minusMonths(24);
+        } else if (periodType.equals("Y")) {
+            since = today.minusYears(10);
+        } else {
+            since = today.minusDays(60);
+        }
+
 
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice")
                         .queryParam("FID_COND_MRKT_DIV_CODE", "J")  // 시장 구분 코드
                         .queryParam("FID_INPUT_ISCD", stockCode)     // 종목 코드
-                        .queryParam("FID_INPUT_DATE_1", "20220501")
-                        .queryParam("FID_INPUT_DATE_2", "20240501")
+                        .queryParam("FID_INPUT_DATE_1", since.format(formatter))
+                        .queryParam("FID_INPUT_DATE_2", today.format(formatter))
                         .queryParam("FID_PERIOD_DIV_CODE", periodType) // 기간 코드 (D:일, W:주, M:월, Y:년)
                         .queryParam("FID_ORG_ADJ_PRC", "0")          // 수정 주가 미반영
                         .build())
