@@ -119,7 +119,8 @@
             background-color: #c9302c;
         }
         .active {
-            background-color: #868E96;
+            background-color: #868E96 !important
+            color: #DDDDDD !important;
         }
   </style>
 </head>
@@ -171,7 +172,7 @@
                     <td>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
                         <div class="chart-buttons">
-                            <button onclick="updateChart('${stock.mkscShrnIscd}', 'D', ${index}, '${stock.htsKorIsnm}', this)">일</button>
+                            <button class="active" onclick="updateChart('${stock.mkscShrnIscd}', 'D', ${index}, '${stock.htsKorIsnm}', this)">일</button>
                             <button onclick="updateChart('${stock.mkscShrnIscd}', 'M', ${index}, '${stock.htsKorIsnm}', this)">월</button>
                             <button onclick="updateChart('${stock.mkscShrnIscd}', 'Y', ${index}, '${stock.htsKorIsnm}', this)">연</button>
                         </div>
@@ -216,14 +217,6 @@
             chartInstances[chartIndex].destroy();
         }
 
-        const minPrice = Math.min(...data);
-        const maxPrice = Math.max(...data);
-        const midPrice = ((maxPrice + minPrice) / 2); // 중간값 계산
-
-        const firstDate = labels[0];
-        const lastDate = labels[labels.length - 1];
-        const midDate = labels[Math.floor(labels.length / 2)];
-
         // 새로운 작은 차트 생성
         chartInstances[chartIndex] = new Chart(ctx, {
             type: 'line',
@@ -243,12 +236,7 @@
                     x: {
                         display: true,
                         ticks: {
-                            callback: function(value, index) {
-                                if (labels[index] === firstDate || labels[index] === lastDate || labels[index] === midDate) {
-                                    return labels[index]; // 가장 최근, 가장 오래된, 중간 날짜만 표시
-                                }
-                                return '';
-                            },
+                            maxTicksLimit: 3,
                             font: {
                                 size: 10 // 날짜 크기 조정
                             },
@@ -259,9 +247,7 @@
                     y: {
                         display: true, // Y축 보이기
                         ticks: {
-                            callback: function(value) {
-                                return value;
-                            },
+                            maxTicksLimit: 3,
                             font: {
                                 size: 10 // 가격 크기 조정
                             },
