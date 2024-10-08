@@ -123,7 +123,7 @@
         }
         .active {
             background-color: #868E96 !important;
-            color: #333333 !important;
+            color: white; !important;
         }
   </style>
 </head>
@@ -171,7 +171,7 @@
                 row.innerHTML = `
                     <td>${stock.dataRank}</td>
                     <td class="stock-name">${stock.htsKorIsnm}</td>
-                    <td>${stock.stckPrpr}</td>
+                    <td>${stock.stckPrpr.toLocaleString()}</td>
                     <td>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
                         <div class="chart-buttons">
