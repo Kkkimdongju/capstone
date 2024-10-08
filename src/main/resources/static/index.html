@@ -272,7 +272,7 @@
                             },
                             min: Math.floor(minPrice),
                             max: Math.floor(maxPrice),
-                            stepSize: (maxPrice-minPrice) / 2),
+                            stepSize: Math.ceil((maxPrice-minPrice) / 2),
                             maxRotation: 0,
                             minRotation: 0
                         },
