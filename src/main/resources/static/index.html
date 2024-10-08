@@ -136,9 +136,40 @@
             background-color: #868E96 !important;
             color: white !important;
         }
+
+        /* 모의 수익률 계산하기 버튼 스타일 */
+        .profit-button-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .open-modal-btn {
+            padding: 10px 20px;
+            background-color: #333333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .open-modal-btn:hover {
+            background-color: #555555;
+        }
+
+        @media (max-width: 600px) {
+          .chart-small {
+            max-width: 100%;
+          }
+        }
   </style>
 </head>
 <body>
+
+<div class="profit-button-container">
+  <!-- 모의 수익률 계산하기 버튼 -->
+  <button id="openModalBtn" class="open-modal-btn">모의투자 수익률 체험</button>
+  <button class="open-modal-btn">김동주 후원하기</button>
+</div>의
 
 <h1>┌П┐실시간 <span class="red-text">주가</span> 정보 제공 서비스┌П┐</h1>
 <div class="container" id="container">
@@ -182,12 +213,10 @@
 
             data.forEach(async (stock, index) => {
                 const row = document.createElement('tr');
-                console.log(stock.stckPrpr.toLocaleString("ko-KR"));
-                console.log(stock.stckPrpr.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','));
                 row.innerHTML = `
                     <td>${stock.dataRank}</td>
                     <td class="stock-name">${stock.htsKorIsnm}</td>
-                    <td>${stock.stckPrpr.toLocaleString("ko-KR")}</td>
+                    <td>${stock.stckPrpr.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
                     <td>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
                         <div class="chart-buttons">
