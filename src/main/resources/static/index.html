@@ -125,6 +125,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-bottom: 20px;
         }
 
         .close-btn:hover {
@@ -184,7 +185,7 @@
                 row.innerHTML = `
                     <td>${stock.dataRank}</td>
                     <td class="stock-name">${stock.htsKorIsnm}</td>
-                    <td>${stock.stckPrpr.toLocaleString()}</td>
+                    <td>${stock.stckPrpr.toLocaleString("ko-KR")}</td>
                     <td>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
                         <div class="chart-buttons">
