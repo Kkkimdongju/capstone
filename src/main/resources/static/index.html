@@ -178,6 +178,7 @@
             border-left-color: black;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            text-align: -webkit-center;
         }
 
         @keyframes spin {
@@ -243,7 +244,7 @@
                     <td>${stock.stckPrpr.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
                     <td>
                         <div style="position: relative;">
-                            <canvas id="chart-small-${index}" class="chart-small"></canvas>
+                            <canvas id="chart-small-${index}" class="chart-small" style="display:none;"></canvas>
                             <div id="loading-indicator-${index}">
                                 <div class="spinner"></div>
                             </div>
@@ -288,6 +289,7 @@
     function hideLoadingIndicator(chartIndex) {
         document.getElementById(`loading-indicator-${chartIndex}`).style.display = 'none';
         document.getElementById(`chart-buttons-${chartIndex}`).style.display = 'flex';
+        document.getElementById(`chart-small-${chartIndex}`).style.display = 'block';
     }
 
     // 차트 데이터를 API에서 가져와 렌더링하는 함수
