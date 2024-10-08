@@ -182,6 +182,8 @@
 
             data.forEach(async (stock, index) => {
                 const row = document.createElement('tr');
+                console.log(stock.stckPrpr.toLocaleString("ko-KR"));
+                console.log(stock.stckPrpr.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','));
                 row.innerHTML = `
                     <td>${stock.dataRank}</td>
                     <td class="stock-name">${stock.htsKorIsnm}</td>
@@ -209,6 +211,21 @@
             console.error('Error fetching stock data:', error);
         }
     }
+
+    // 버튼 클릭 시 차트 업데이트 함수
+    async function updateChart(stockCode, periodType, chartIndex, stockName, buttonElement) {
+        await fetchChartData(stockName, stockCode, periodType, chartIndex);
+
+        // 모든 버튼의 활성화 상태 해제
+        const buttons = buttonElement.parentNode.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.classList.remove('active');
+        });
+
+        // 클릭된 버튼만 활성화 상태로 변경
+        buttonElement.classList.add('active');
+    }
+
 
     // 차트 데이터를 API에서 가져와 렌더링하는 함수
     async function fetchChartData(stockName, stockCode, periodType, chartIndex) {
