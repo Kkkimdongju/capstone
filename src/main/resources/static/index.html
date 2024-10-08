@@ -161,6 +161,38 @@
             max-width: 100%;
           }
         }
+        #loading-indicator {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 16px;
+          color: #333;
+          background-color: rgba(255, 255, 255, 0.8);
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          text-align: center;
+          z-index: 9999;
+        }
+
+        /* 스피너 스타일 */
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid rgba(0, 0, 0, 0.1);
+          border-top: 4px solid #333;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 10px;
+        }
+
+        /* 스피너 애니메이션 */
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
   </style>
 </head>
 <body>
@@ -218,8 +250,11 @@
                     <td class="stock-name">${stock.htsKorIsnm}</td>
                     <td>${stock.stckPrpr.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
                     <td>
+                        <div id="loading-indicator-${index}" style="display:none;">
+                            <div class="spinner"></div>
+                        </div>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
-                        <div class="chart-buttons">
+                        <div id="chart-buttons-${index}" class="chart-buttons" style="display:none;">
                             <button class="active" onclick="updateChart('${stock.mkscShrnIscd}', 'D', ${index}, '${stock.htsKorIsnm}', this)">Day</button>
                             <button onclick="updateChart('${stock.mkscShrnIscd}', 'M', ${index}, '${stock.htsKorIsnm}', this)">Month</button>
                             <button onclick="updateChart('${stock.mkscShrnIscd}', 'Y', ${index}, '${stock.htsKorIsnm}', this)">Year</button>
@@ -255,19 +290,33 @@
         buttonElement.classList.add('active');
     }
 
+    // 차트 데이터 가져오기 전에 로딩 인디케이터 표시
+    function showLoadingIndicator(chartIndex) {
+        document.getElementById('loading-indicator-${chartIndex}').style.display = 'block';
+    }
+
+    // 차트 데이터 가져온 후 로딩 인디케이터 숨기기
+    function hideLoadingIndicator(chartIndex) {
+        document.getElementById('loading-indicator-${chartIndex}').style.display = 'none';
+        document.getElementById('chart-buttons-${chartIndex}').style.display = 'flex';
+    }
 
     // 차트 데이터를 API에서 가져와 렌더링하는 함수
     async function fetchChartData(stockName, stockCode, periodType, chartIndex) {
+        showLoadingIndicator(chartIndex); // 로딩 인디케이터 표시
+
         try {
             const response = await fetch(`/stock-price?stockCode=${stockCode}&periodType=${periodType}`);
-            const data = await response.json();
+            const data = await response.json(); // API로부터 데이터 받아오기
 
-            const labels = data.map(item => item.date).reverse();
-            const prices = data.map(item => item.closePrice).reverse();
+            const labels = data.map(item => item.date).reverse(); // 날짜 레이블을 최신 순으로 정렬
+            const prices = data.map(item => item.closePrice).reverse(); // 가격 데이터도 최신 순으로 정렬
 
             renderSmallChart(labels, prices, chartIndex, stockName);
         } catch (error) {
             console.error('Error fetching chart data:', error);
+        } finally {
+            hideLoadingIndicator(chartIndex); // 차트 렌더링이 완료되면 로딩 인디케이터 숨기기
         }
     }
 
@@ -298,7 +347,8 @@
                     data: data,
                     borderColor: 'rgba(0, 0, 0, 1)', // 검정색 선
                     fill: false,
-                    tension: 0.1
+                    tension: 0.1,
+                    pointRadius: 0
                 }]
             },
             options: {
