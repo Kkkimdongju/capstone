@@ -78,6 +78,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: x-small;
         }
         .chart-buttons button:hover {
             background-color: #333333;
@@ -187,9 +188,9 @@
                     <td>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
                         <div class="chart-buttons">
-                            <button class="active" onclick="updateChart('${stock.mkscShrnIscd}', 'D', ${index}, '${stock.htsKorIsnm}', this)">일</button>
-                            <button onclick="updateChart('${stock.mkscShrnIscd}', 'M', ${index}, '${stock.htsKorIsnm}', this)">월</button>
-                            <button onclick="updateChart('${stock.mkscShrnIscd}', 'Y', ${index}, '${stock.htsKorIsnm}', this)">연</button>
+                            <button class="active" onclick="updateChart('${stock.mkscShrnIscd}', 'D', ${index}, '${stock.htsKorIsnm}', this)">Day</button>
+                            <button onclick="updateChart('${stock.mkscShrnIscd}', 'M', ${index}, '${stock.htsKorIsnm}', this)">Month</button>
+                            <button onclick="updateChart('${stock.mkscShrnIscd}', 'Y', ${index}, '${stock.htsKorIsnm}', this)">Year</button>
                         </div>
                     </td>
                 `;
@@ -232,6 +233,14 @@
             chartInstances[chartIndex].destroy();
         }
 
+        const minPrice = Math.min(...data);
+        const maxPrice = Math.max(...data);
+        const midPrice = Math.floor((maxPrice + minPrice) / 2); // 중간값 계산
+
+        const firstDate = labels[0];
+        const lastDate = labels[labels.length - 1];
+        const midDate = labels[Math.floor(labels.length / 2)];
+
         // 새로운 작은 차트 생성
         chartInstances[chartIndex] = new Chart(ctx, {
             type: 'line',
@@ -240,7 +249,7 @@
                 datasets: [{
                     label: `${stockName} 최근 차트`,
                     data: data,
-                    borderColor: 'rgba(0, 0, 0, 1)',
+                    borderColor: 'rgba(0, 0, 0, 1)', // 검정색 선
                     fill: false,
                     tension: 0.1
                 }]
@@ -250,14 +259,41 @@
                 scales: {
                     x: {
                         display: true,
+                        ticks: {
+                            callback: function(value, index, values) {
+                                if (index === 0 || index === values.length - 1 || index === Math.floor(values.length / 2)) {
+                                    return labels[value]; // 가장 최근, 가장 오래된, 중간 날짜만 표시
+                                }
+                                return '';
+                            },
+                            autoSkip: false,
+                            font: {
+                                size: 9 // 날짜 크기 조정
+                            },
+                            maxRotation: 0,
+                            minRotation: 0
+                        }
                     },
                     y: {
-                        display: true,
+                        display: true, // Y축 보이기
+                        ticks: {
+                            callback: function(value) {
+                                return Math.floor(value);
+                            },
+                            font: {
+                                size: 9 // 가격 크기 조정
+                            },
+                            min: Math.floor(minPrice),
+                            max: Math.floor(maxPrice),
+                            stepSize: Math.ceil((maxPrice-minPrice) / 2),
+                            maxRotation: 0,
+                            minRotation: 0
+                        },
                     }
                 },
                 plugins: {
                     legend: {
-                        display: false
+                        display: false // 범례 숨기기
                     }
                 }
             }
