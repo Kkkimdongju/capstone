@@ -250,7 +250,7 @@
                     <td class="stock-name">${stock.htsKorIsnm}</td>
                     <td>${stock.stckPrpr.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
                     <td>
-                        <div id="loading-indicator-${index}" style="display:none;">
+                        <div id="loading-indicator-${index}">
                             <div class="spinner"></div>
                         </div>
                         <canvas id="chart-small-${index}" class="chart-small"></canvas>
@@ -290,11 +290,6 @@
         buttonElement.classList.add('active');
     }
 
-    // 차트 데이터 가져오기 전에 로딩 인디케이터 표시
-    function showLoadingIndicator(chartIndex) {
-        document.getElementById('loading-indicator-${chartIndex}').style.display = 'block';
-    }
-
     // 차트 데이터 가져온 후 로딩 인디케이터 숨기기
     function hideLoadingIndicator(chartIndex) {
         document.getElementById('loading-indicator-${chartIndex}').style.display = 'none';
@@ -303,8 +298,6 @@
 
     // 차트 데이터를 API에서 가져와 렌더링하는 함수
     async function fetchChartData(stockName, stockCode, periodType, chartIndex) {
-        showLoadingIndicator(chartIndex); // 로딩 인디케이터 표시
-
         try {
             const response = await fetch(`/stock-price?stockCode=${stockCode}&periodType=${periodType}`);
             const data = await response.json(); // API로부터 데이터 받아오기
