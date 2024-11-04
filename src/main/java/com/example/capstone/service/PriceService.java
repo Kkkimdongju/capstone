@@ -47,7 +47,7 @@ public class PriceService {
         headers.set("tr_id", "FHKST03010100");  // '국내주식기간별시세' API의 트랜잭션 ID
         headers.set("custtype", "P");
         return headers;
-    }
+    } 
 
     // API 응답을 처리하여 원하는 형식으로 변환하는 메소드
     private Mono<List<StockPriceDTO>> parseStockPriceResponse(String response) {
@@ -94,6 +94,24 @@ public class PriceService {
                         .queryParam("FID_INPUT_DATE_1", since.format(formatter))
                         .queryParam("FID_INPUT_DATE_2", today.format(formatter))
                         .queryParam("FID_PERIOD_DIV_CODE", periodType) // 기간 코드 (D:일, W:주, M:월, Y:년)
+                        .queryParam("FID_ORG_ADJ_PRC", "0")          // 수정 주가 미반영
+                        .build())
+                .headers(httpHeaders -> httpHeaders.addAll(headers))
+                .retrieve()
+                .bodyToMono(String.class)
+                .flatMap(response -> parseStockPriceResponse(response));
+    }
+
+    public Mono<List<StockPriceDTO>> getStockPrice2(String stockCode, String date) {
+        HttpHeaders headers = createStockPriceHttpHeaders();
+
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice")
+                        .queryParam("FID_COND_MRKT_DIV_CODE", "J")  // 시장 구분 코드
+                        .queryParam("FID_INPUT_ISCD", stockCode)     // 종목 코드
+                        .queryParam("FID_INPUT_DATE_1", date)
+                        .queryParam("FID_INPUT_DATE_2", date)
+                        .queryParam("FID_PERIOD_DIV_CODE", "D") // 기간 코드 (D:일, W:주, M:월, Y:년)
                         .queryParam("FID_ORG_ADJ_PRC", "0")          // 수정 주가 미반영
                         .build())
                 .headers(httpHeaders -> httpHeaders.addAll(headers))

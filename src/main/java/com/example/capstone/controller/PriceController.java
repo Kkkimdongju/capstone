@@ -26,4 +26,10 @@ public class PriceController {
             @RequestParam String periodType) {
         return stockPriceService.getStockPrice(stockCode, periodType);
     }
+    @GetMapping("/stock-price2")
+    public Mono<List<StockPriceDTO>> getStockPrice2(
+            @RequestParam String stockCode,
+            @RequestParam String date) {
+        return stockPriceService.getStockPrice2(stockCode, date);
+    }
 }
